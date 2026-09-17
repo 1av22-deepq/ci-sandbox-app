@@ -1,0 +1,49 @@
+stages:
+  - lint
+  - test
+  - agent-eval
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  npm_config_cache: "$CI_PROJECT_DIR/.cache/npm"
+
+cache:
+  paths:
+    - .cache/pip
+    - .cache/npm
+
+# 1. Frontend Checks (React)
+frontend-test:
+  stage: test
+  image: node:20-alpine
+  before_script:
+    - cd frontend
+    - npm ci
+  script:
+    - npm test -- --watchAll=false
+
+# 2. Backend Unit & Integration Tests (Django)
+backend-test:
+  stage: test
+  image: python:3.11-slim
+  before_script:
+    - cd backend
+    - python -m venv venv
+    - . venv/bin/activate
+    - pip install -r requirements.txt
+  script:
+    - python manage.py test
+
+# 3. Agentic AI Evaluation
+agent-evaluation:
+  stage: agent-eval
+  image: python:3.11-slim
+  before_script:
+    - cd backend
+    - python -m venv venv
+    - . venv/bin/activate
+    - pip install -r requirements.txt
+  script:
+    - pytest tests/evals/ --maxfail=1
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
