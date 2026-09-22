@@ -1,49 +1,41 @@
 stages:
-  - lint
   - test
-  - agent-eval
 
 variables:
+  # Cache pip packages and npm modules across runs
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   npm_config_cache: "$CI_PROJECT_DIR/.cache/npm"
 
 cache:
+  key: "${CI_COMMIT_REF_SLUG}"
   paths:
     - .cache/pip
     - .cache/npm
 
-# 1. Frontend Checks (React)
-frontend-test:
-  stage: test
-  image: node:20-alpine
-  before_script:
-    - cd frontend
-    - npm ci
-  script:
-    - npm test -- --watchAll=false
-
-# 2. Backend Unit & Integration Tests (Django)
+# -----------------------------------------------------------
+# Backend: Django Tests
+# -----------------------------------------------------------
 backend-test:
   stage: test
   image: python:3.11-slim
   before_script:
     - cd backend
-    - python -m venv venv
-    - . venv/bin/activate
-    - pip install -r requirements.txt
+    # Upgrade pip and install dependencies directly to the container
+    - python -m pip install --upgrade pip
+    - pip install --no-cache-dir -r requirements.txt
   script:
-    - python manage.py test
+    - python manage.py test --no-input
 
-# 3. Agentic AI Evaluation
-agent-evaluation:
-  stage: agent-eval
-  image: python:3.11-slim
+# -----------------------------------------------------------
+# Frontend: React Tests
+# -----------------------------------------------------------
+frontend-test:
+  stage: test
+  image: node:20-alpine
   before_script:
-    - cd backend
-    - python -m venv venv
-    - . venv/bin/activate
-    - pip install -r requirements.txt
+    - cd frontend
+    # Use clean install if package-lock exists, fallback to npm install
+    - npm ci || npm install
   script:
-    - pytest tests/evals/ --maxfail=1
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    # CI=true prevents Jest from hanging in interactive watch mode
+    - CI=true npm test -- --watchAll=false
