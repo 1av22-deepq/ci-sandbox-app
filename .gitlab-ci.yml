@@ -2,7 +2,6 @@ stages:
   - test
 
 variables:
-  # Cache pip packages and npm modules across runs
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   npm_config_cache: "$CI_PROJECT_DIR/.cache/npm"
 
@@ -20,22 +19,19 @@ backend-test:
   image: python:3.11-slim
   before_script:
     - cd backend
-    # Upgrade pip and install dependencies directly to the container
     - python -m pip install --upgrade pip
     - pip install --no-cache-dir -r requirements.txt
   script:
     - python manage.py test --no-input
 
 # -----------------------------------------------------------
-# Frontend: React Tests
+# Frontend: Node Tests
 # -----------------------------------------------------------
 frontend-test:
   stage: test
   image: node:20-alpine
   before_script:
     - cd frontend
-    # Use clean install if package-lock exists, fallback to npm install
-    - npm ci || npm install
+    - npm install
   script:
-    # CI=true prevents Jest from hanging in interactive watch mode
-    - CI=true npm test -- --watchAll=false
+    - npm test
