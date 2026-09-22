@@ -1,0 +1,19 @@
+name: Mirror Code to GitLab
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  push-to-gitlab:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to GitLab
+        run: |
+          git push --force "https://oauth2:${{ secrets.GITLAB_PUSH_TOKEN }}@gitlab.com/aditya-deepq/ci-sandbox-app.git" main
