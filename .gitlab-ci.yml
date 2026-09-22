@@ -2,6 +2,7 @@ stages:
   - test
 
 variables:
+  GIT_STRATEGY: clone
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   npm_config_cache: "$CI_PROJECT_DIR/.cache/npm"
 
@@ -20,7 +21,7 @@ backend-test:
   before_script:
     - cd backend
     - python -m pip install --upgrade pip
-    - pip install --no-cache-dir -r requirements.txt
+    - if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.txt; fi
   script:
     - python manage.py test --no-input
 
